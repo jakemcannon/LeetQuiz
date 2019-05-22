@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Aggregator</title>
+</head>
+<body>
+
+	{% for post in posts %}
+		<h1>{{ post.title }}</h1>
+		<p>by {{ post.author }}</p>
+	{% endfor %}
+
+</body>
+</html>

@@ -6,6 +6,13 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
+flask = "*"
+flask-marshmallow = "*"
+marshamllow-sqlalchemy = "*"
+flask-bcrypt = "*"
+sqlalchemy = "*"
+flask-sqlalchemy = "*"
+marshmallow-sqlalchemy = "*"
 flask-jwt-extended = "*"
 
 [requires]

@@ -24,7 +24,6 @@ class Deck(db.Model):
     def __repr__(self):
         return '<Deck {}>'.format(self.name)
 
-
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     body = db.Column(db.String(240))

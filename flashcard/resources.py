@@ -16,19 +16,15 @@ class QuestionSchema(ma.ModelSchema):
 	class Meta:
 		model = Question
 
-
-
 @app.route('/register', methods=['POST'])
 def register_user():
 	data = request.get_json()
 	user = db.session.query(User).filter_by(email=data['email']).first()
-
 	if user:
-		return jsonify({'message':'User already exists.'}), 404
-
+		# 409 conflict, when a resource already exists
+		return jsonify({'message':'User already exists.'}), 409
 	hashed_password = bcrypt.generate_password_hash(data['password_hash']).decode('utf-8')
 	new_user = User(username=data['username'], email=data['email'], password_hash=hashed_password)
-
 	db.session.add(new_user)
 	db.session.commit()
 	return jsonify({'message': 'New user created'}), 200
@@ -41,18 +37,16 @@ def login_user():
 
 	user = db.session.query(User).filter_by(email=email).first()
 	if not user:
-		return jsosnify ({'message':'User with {} does not exist.'.format(email)}), 404
+		return jsonify({'message':'User with {} does not exist.'.format(email)}), 404
 	if bcrypt.check_password_hash(user.password_hash, password):
 		access_token = create_access_token(identity=user.id)
 		return jsonify(access_token=access_token), 200
 	else:
 		return jsonify({'message':'Invalid login.'}), 401
 
-	return jsonify({'message': 'New user created'})
-
 @app.route('/')
 def index():
-	return jsonify({'in': 'home page'})
+	return jsonify({'test': 'home page'})
 
 # GET all users
 @app.route('/users')
@@ -72,8 +66,9 @@ def get_user(user_id):
 		user_schema = UserSchema()
 		return user_schema.jsonify(user), 200
 	else:
-		return jsonify({'message':'Incorrect user'}), 200
+		return jsonify({'message':'Incorrect user'}), 401
 
+# Test /protected route
 @app.route('/protected', methods=['GET'])
 @jwt_required
 def protected():
@@ -98,16 +93,19 @@ def get_decks():
 	else:
 		return jsonify({'message':'Unauthorized access'})
 
-# # POST a new deck
-# @app.route('/users/<user_id>/decks', methods=['POST'])
-# @jwt_required
-# def create_deck(user_id):
-# 	data = request.get_json()
-# 	new_deck = Deck(name=data['name'], author=User.query.get(user_id))
-# 	db.session.add(new_deck)
-# 	db.session.commit()
-# 	return jsonify({'message':'Created a new deck'})
-
+# Create a new deck
+@app.route('/decks', methods=['POST'])
+@jwt_required
+def create_deck():
+	current_user = get_jwt_identity()
+	data = request.get_json()
+	if current_user == int(data["user_id"]):
+		new_deck = Deck(name=data['name'], author=User.query.get(current_user))
+		db.session.add(new_deck)
+		db.session.commit()
+		return jsonify({'message':'Created a new deck'}), 200
+	else:
+		return jsonify({'message':'Unauthorized access'}), 401
 
 # GET a individual deck
 @app.route('/decks/<deck_id>', methods=['GET'])
@@ -125,20 +123,6 @@ def get_deck(deck_id):
 	else:
 		return jsonify({'message':'Unauthorized access'})
 
-# POST a new deck
-@app.route('/decks', methods=['POST'])
-@jwt_required
-def create_deck():
-	current_user = get_jwt_identity()
-	data = request.get_json()
-	new_deck = Deck(name=data['name'], author=User.query.get(current_user))
-	db.session.add(new_deck)
-	db.session.commit()
-	return jsonify({'message':'Created a new deck'})
-
-
-
-
 # # GET a individual deck
 # @app.route('/users/<user_id>/decks/<deck_id>')
 # @jwt_required
@@ -154,6 +138,26 @@ def create_deck():
 # 			return jsonify({'message':'Unauthorized access'})
 # 	else:
 # 		return jsonify({'message':'Unauthorized access'})
+
+
+# # Delete an existing deck
+# @app.route('/decks', methods=['GET', 'POST'])
+# @jwt_required
+# def delete_deck():
+# 	current_user = get_jwt_identity()
+# 	data = request.get_json()
+# 	if current_user == int(data["user_id"]):
+# 		deck_id == data["id"]
+# 		delete_deck = db.session.query(Deck).filter_by(Deck.id==deck_id).first()
+# 		db.session.add(new_deck)
+# 		db.session.delete
+# 		db.session.commit()
+# 		return jsonify({'message':'Created a new deck'}), 200
+# 	else:
+# 		return jsonify({'message':'Unauthorized access'}), 401
+
+
+
 
 # # GET all questions
 # @app.route('/users/<user_id>/decks/<deck_id>/questions')
@@ -187,9 +191,11 @@ def create_question(deck_id):
 @jwt_required
 def get_question(question_id):
 	current_user = get_jwt_identity()
+	# This looks broken
 	user_query = request.args['deck_id']
 	if current_user:
 		try:
+			# This looks broken
 			question = db.session.query(Question).join(Deck).filter(Deck.id == user_query, Question.id == question_id).first()
 			question_schema = QuestionSchema()
 			output = question_schema.dump(question).data

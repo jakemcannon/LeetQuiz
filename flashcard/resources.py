@@ -116,29 +116,14 @@ def get_deck(deck_id):
 	if current_user:
 		try:
 			deck_schema = DeckSchema()
+			question_schema = QuestionSchema(many=True)
+			questions = deck.questions.all()
 			output = deck_schema.dump(deck).data
 			return jsonify({'deck {}'.format(deck.id): output})
 		except Exception as e:
 			return jsonify({'message':'Unauthorized access'})
 	else:
 		return jsonify({'message':'Unauthorized access'})
-
-# # GET a individual deck
-# @app.route('/users/<user_id>/decks/<deck_id>')
-# @jwt_required
-# def get_deck(user_id, deck_id):
-# 	current_user = get_jwt_identity()
-# 	if current_user == int(user_id):
-# 		try:
-# 			deck = db.session.query(Deck).join(Deck.author).filter(Deck.id==deck_id).filter(User.id==current_user).first()
-# 			deck_schema = DeckSchema()
-# 			output = deck_schema.dump(deck).data
-# 			return jsonify({'deck {}'.format(deck.id): output})
-# 		except Exception as e:
-# 			return jsonify({'message':'Unauthorized access'})
-# 	else:
-# 		return jsonify({'message':'Unauthorized access'})
-
 
 # # Delete an existing deck
 # @app.route('/decks', methods=['GET', 'POST'])
@@ -155,8 +140,6 @@ def get_deck(deck_id):
 # 		return jsonify({'message':'Created a new deck'}), 200
 # 	else:
 # 		return jsonify({'message':'Unauthorized access'}), 401
-
-
 
 
 # # GET all questions

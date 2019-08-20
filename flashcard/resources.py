@@ -92,21 +92,7 @@ def get_decks():
 	else:
 		return jsonify({'message':'Unauthorized access'})
 
-# Create a new deck
-@app.route('/decks', methods=['POST'])
-@jwt_required
-def create_deck():
-	current_user = get_jwt_identity()
-	data = request.get_json()
-	if current_user == int(data["user_id"]):
-		new_deck = Deck(name=data['name'], author=User.query.get(current_user))
-		db.session.add(new_deck)
-		db.session.commit()
-		return jsonify({'message':'Created a new deck'}), 200
-	else:
-		return jsonify({'message':'Unauthorized access'}), 401
-
-# GET a individual deck
+# GET an individual deck
 @app.route('/decks/<deck_id>', methods=['GET'])
 @jwt_required
 def get_deck(deck_id):
@@ -124,6 +110,20 @@ def get_deck(deck_id):
 	else:
 		return jsonify({'message':'Unauthorized access'})
 
+# Create a new deck
+@app.route('/decks', methods=['POST'])
+@jwt_required
+def create_deck():
+	current_user = get_jwt_identity()
+	data = request.get_json()
+	if current_user == int(data["user_id"]):
+		new_deck = Deck(name=data['name'], author=User.query.get(current_user))
+		db.session.add(new_deck)
+		db.session.commit()
+		return jsonify({'message':'Created a new deck'}), 200
+	else:
+		return jsonify({'message':'Unauthorized access'}), 401
+
 # Delete an existing deck
 @app.route('/decks/<deck_id>', methods=['POST'])
 @jwt_required
@@ -132,16 +132,14 @@ def delete_deck(deck_id):
 	data = request.get_json()
 	if current_user:
 		try:
-			d = db.session.query(Deck).filter(Deck.id==deck_id).filter(Deck.user_id==current_user).filter(User.id==current_user).first()
-			db.session.delete(d)
+			deck = db.session.query(Deck).filter(Deck.id==deck_id).filter(Deck.user_id==current_user).filter(User.id==current_user).first()
+			db.session.delete(deck)
 			db.session.commit()
 			return jsonify({'message':'Deleted deck'}), 200
 		except Exception as e:
 			return jsonify({'message':'Unauthorized access'}), 401
 	else:
 		return jsonify({'message':'Unauthorized access'}), 401
-
-
 
 # # GET all questions
 # @app.route('/users/<user_id>/decks/<deck_id>/questions')
@@ -159,48 +157,59 @@ def delete_deck(deck_id):
 # # 	else:
 # 		return jsonify({'message':'Unauthorized access'})
 
-
-# POST a new question
-@app.route('/decks/<deck_id>/questions', methods=['POST'])
-def create_question(deck_id):
-	data = request.get_json()
-
-	new_question = Question(body=data['body'], answer=data['answer'], deck=Deck.query.get(deck_id))
-	db.session.add(new_question)
-	db.session.commit()
-	return jsonify({'message':'Created a new question'})
-
-# GET a single question
-@app.route('/questions/<question_id>', methods=['GET'])
-@jwt_required
-def get_question(question_id):
-	current_user = get_jwt_identity()
-	# This looks broken
-	user_query = request.args['deck_id']
-	if current_user:
-		try:
-			# This looks broken
-			question = db.session.query(Question).join(Deck).filter(Deck.id == user_query, Question.id == question_id).first()
-			question_schema = QuestionSchema()
-			output = question_schema.dump(question).data
-			return jsonify({'questions': output})
-		except Exception as e:
-			return jsonify({'message':'Unauthorized access'})
-
 # GET all questions
 @app.route('/questions', methods=['GET'])
 @jwt_required
 def get_questions():
 	current_user = get_jwt_identity()
-	user_query = request.args['deck_id']
-	d = db.session.query(Deck).filter(Deck.id == user_query, Deck.user_id == current_user).first()
+	user_query = request.args['questions']
+	deck = db.session.query(Deck).filter(Deck.id == user_query, Deck.user_id == current_user).first()
 	if current_user:
 		try:
-			questions = d.questions.all()
+			questions = deck.questions.all()
 			question_schema = QuestionSchema(many=True)
 			output = question_schema.dump(questions).data
+			return jsonify({'message': output})
+		except Exception as e:
+			return jsonify({'message':'Unauthorized access'})
+
+# GET a single question
+@app.route('/questions/<question_id>', methods=['GET'])
+@jwt_required
+def get_question(question_id):	
+	current_user = get_jwt_identity()
+	user_query = request.args['q']
+	if current_user:
+		try:
+			question = db.session.query(Question).join(Deck).filter(Deck.id == user_query, Question.id == question_id).first()
+			question_schema = QuestionSchema()	
+			output = question_schema.dump(question).data
 			return jsonify({'questions': output})
 		except Exception as e:
 			return jsonify({'message':'Unauthorized access'})
 
+
+# POST a new question
+@app.route('/decks/<deck_id>/questions', methods=['POST'])
+def create_question(deck_id):
+	data = request.get_json()
+	new_question = Question(body=data['body'], answer=data['answer'], deck=Deck.query.get(deck_id))
+	db.session.add(new_question)
+	db.session.commit()
+	return jsonify({'message':'Created a new question'})
+
+# Delete a single question
+@app.route('/questions/<question_id>', methods=['POST'])
+@jwt_required
+def delete_question(question_id):	
+	current_user = get_jwt_identity()
+	user_query = request.args['q']
+	if current_user:
+		try:
+			question = db.session.query(Question).join(Deck).filter(Deck.id == user_query, Question.id == question_id).first()
+			db.session.delete(question)
+			db.session.commit()
+			return jsonify({'message': 'Question deleted'})
+		except Exception as e:
+			return jsonify({'message':'Unauthorized access'})
 

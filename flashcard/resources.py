@@ -3,7 +3,6 @@ from flask import jsonify, request
 from flashcard.models import User, Deck, Question
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 
-
 class UserSchema(ma.ModelSchema):
 	class Meta:
 		model = User
@@ -125,21 +124,23 @@ def get_deck(deck_id):
 	else:
 		return jsonify({'message':'Unauthorized access'})
 
-# # Delete an existing deck
-# @app.route('/decks', methods=['GET', 'POST'])
-# @jwt_required
-# def delete_deck():
-# 	current_user = get_jwt_identity()
-# 	data = request.get_json()
-# 	if current_user == int(data["user_id"]):
-# 		deck_id == data["id"]
-# 		delete_deck = db.session.query(Deck).filter_by(Deck.id==deck_id).first()
-# 		db.session.add(new_deck)
-# 		db.session.delete
-# 		db.session.commit()
-# 		return jsonify({'message':'Created a new deck'}), 200
-# 	else:
-# 		return jsonify({'message':'Unauthorized access'}), 401
+# Delete an existing deck
+@app.route('/decks/<deck_id>', methods=['POST'])
+@jwt_required
+def delete_deck(deck_id):
+	current_user = get_jwt_identity()
+	data = request.get_json()
+	if current_user:
+		try:
+			d = db.session.query(Deck).filter(Deck.id==deck_id).filter(Deck.user_id==current_user).filter(User.id==current_user).first()
+			db.session.delete(d)
+			db.session.commit()
+			return jsonify({'message':'Deleted deck'}), 200
+		except Exception as e:
+			return jsonify({'message':'Unauthorized access'}), 401
+	else:
+		return jsonify({'message':'Unauthorized access'}), 401
+
 
 
 # # GET all questions

@@ -19,7 +19,7 @@ class Deck(db.Model):
     name = db.Column(db.String(140))
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    questions = db.relationship('Question', backref='deck', lazy='dynamic')
+    questions = db.relationship('Question', cascade="all,delete", backref='deck', lazy='dynamic')
 
     def __repr__(self):
         return '<Deck {}>'.format(self.name)

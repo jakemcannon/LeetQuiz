@@ -162,18 +162,19 @@ def delete_deck(deck_id):
 @jwt_required
 def get_questions():
 	current_user = get_jwt_identity()
-	user_query = request.args['questions']
+	user_query = request.args['q']
 	deck = db.session.query(Deck).filter(Deck.id == user_query, Deck.user_id == current_user).first()
 	if current_user:
 		try:
 			questions = deck.questions.all()
 			question_schema = QuestionSchema(many=True)
 			output = question_schema.dump(questions).data
-			return jsonify({'message': output})
+			return jsonify({'All questions': output})
 		except Exception as e:
 			return jsonify({'message':'Unauthorized access'})
 
 # GET a single question
+# /questions/id?q=deck_id
 @app.route('/questions/<question_id>', methods=['GET'])
 @jwt_required
 def get_question(question_id):	
@@ -199,6 +200,7 @@ def create_question(deck_id):
 	return jsonify({'message':'Created a new question'})
 
 # Delete a single question
+# /questions/id?q=deck_id
 @app.route('/questions/<question_id>', methods=['POST'])
 @jwt_required
 def delete_question(question_id):	

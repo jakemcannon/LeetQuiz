@@ -141,7 +141,6 @@ def delete_deck(deck_id):
 	else:
 		return jsonify({'message':'Unauthorized access'}), 401
 
-
 @app.route('/decks/<deck_id>', methods=['PUT'])
 @jwt_required
 def update_deck_title(deck_id):
@@ -149,6 +148,7 @@ def update_deck_title(deck_id):
 	data = request.get_json()
 	if current_user:
 		try:
+			print(data)
 			deck = db.session.query(Deck).join(Deck.author).filter(Deck.id==deck_id).filter(User.id==current_user).first()
 			deck.name = data['name']
 			db.session.commit()
@@ -211,6 +211,25 @@ def get_question(question_id):
 		except Exception as e:
 			return jsonify({'message':'Unauthorized access'})
 
+# PUT a single question
+# /questions/id?q=deck_id
+@app.route('/questions/<question_id>', methods=['PUT'])
+@jwt_required
+def update_question(question_id):	
+	current_user = get_jwt_identity()
+	user_query = request.args['q']
+	data = request.get_json()
+	if current_user:
+		question = db.session.query(Question).join(Deck).filter(Deck.id == user_query, Question.id == question_id).first()
+		if 'body' in data and question != None:
+			question.body =data['body']
+		if 'answer' in data and question != None:
+			question.answer = data['answer']
+		question_schema = QuestionSchema()	
+		output = question_schema.dump(question).data
+		return jsonify({'questions': output})
+	else:
+		return jsonify({'message':'Unauthorized access'})
 
 # POST a new question
 @app.route('/decks/<deck_id>/questions', methods=['POST'])

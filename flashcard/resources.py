@@ -141,6 +141,28 @@ def delete_deck(deck_id):
 	else:
 		return jsonify({'message':'Unauthorized access'}), 401
 
+
+@app.route('/decks/<deck_id>', methods=['PUT'])
+@jwt_required
+def update_deck_title(deck_id):
+	current_user = get_jwt_identity()
+	data = request.get_json()
+	if current_user:
+		try:
+			deck = db.session.query(Deck).join(Deck.author).filter(Deck.id==deck_id).filter(User.id==current_user).first()
+			deck.name = data['name']
+			db.session.commit()
+			return jsonify({'message':'Updated Deck title'}), 200
+		except Exception as e:
+			return jsonify({'message':'No data provided'}), 401
+	# Not working properly atm
+	else:
+		return jsonify({'message':'Unauthorized access'}), 401
+
+
+
+			# return redirec("/decks/" + str(deck_id))
+
 # # GET all questions
 # @app.route('/users/<user_id>/decks/<deck_id>/questions')
 # @jwt_required

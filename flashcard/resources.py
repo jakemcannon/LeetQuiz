@@ -211,6 +211,22 @@ def get_question(question_id):
 		except Exception as e:
 			return jsonify({'message':'Unauthorized access'})
 
+# Currently is not protecting other routes
+@app.route('/decks/<deck_id>/questions/<question_id>', methods=['GET'])
+@jwt_required
+def get_question_2(deck_id, question_id):	
+	current_user = get_jwt_identity()
+	# user_query = request.args['q']
+	if current_user:
+		try:
+			question = db.session.query(Question).join(Deck).filter(Deck.id == deck_id, Question.id == question_id).first()
+			question_schema = QuestionSchema()	
+			output = question_schema.dump(question).data
+			return jsonify({'questions': output})
+		except Exception as e:
+			return jsonify({'message':'Unauthorized access'})
+
+
 # PUT a single question
 # /questions/id?q=deck_id
 @app.route('/questions/<question_id>', methods=['PUT'])

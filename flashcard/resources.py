@@ -179,13 +179,28 @@ def update_deck_title(deck_id):
 # # 	else:
 # 		return jsonify({'message':'Unauthorized access'})
 
+# GET all questions via query route
+# @app.route('/questions', methods=['GET'])
+# @jwt_required
+# def get_questions():
+# 	current_user = get_jwt_identity()
+# 	user_query = request.args['q']
+# 	deck = db.session.query(Deck).filter(Deck.id == user_query, Deck.user_id == current_user).first()
+# 	if current_user:
+# 		try:
+# 			questions = deck.questions.all()
+# 			question_schema = QuestionSchema(many=True)
+# 			output = question_schema.dump(questions).data
+# 			return jsonify({'All questions': output})
+# 		except Exception as e:
+# 			return jsonify({'message':'Unauthorized access'})
+
 # GET all questions
-@app.route('/questions', methods=['GET'])
+@app.route('/decks/<deck_id>/questions', methods=['GET'])
 @jwt_required
-def get_questions():
+def get_questions(deck_id):
 	current_user = get_jwt_identity()
-	user_query = request.args['q']
-	deck = db.session.query(Deck).filter(Deck.id == user_query, Deck.user_id == current_user).first()
+	deck = db.session.query(Deck).filter(Deck.id == deck_id, Deck.user_id == current_user).first()
 	if current_user:
 		try:
 			questions = deck.questions.all()
@@ -195,31 +210,32 @@ def get_questions():
 		except Exception as e:
 			return jsonify({'message':'Unauthorized access'})
 
-# GET a single question
-# /questions/id?q=deck_id
-@app.route('/questions/<question_id>', methods=['GET'])
-@jwt_required
-def get_question(question_id):	
-	current_user = get_jwt_identity()
-	user_query = request.args['q']
-	if current_user:
-		try:
-			question = db.session.query(Question).join(Deck).filter(Deck.id == user_query, Question.id == question_id).first()
-			question_schema = QuestionSchema()	
-			output = question_schema.dump(question).data
-			return jsonify({'questions': output})
-		except Exception as e:
-			return jsonify({'message':'Unauthorized access'})
 
-# Currently is not protecting other routes
+# GET a single question via query route
+# /questions/id?q=deck_id
+# @app.route('/questions/<question_id>', methods=['GET'])
+# @jwt_required
+# def get_question(question_id):	
+# 	current_user = get_jwt_identity()
+# 	user_query = request.args['q']
+# 	if current_user:
+# 		try:
+# 			question = db.session.query(Question).join(Deck).filter(Deck.id == user_query, Question.id == question_id).first()
+# 			question_schema = QuestionSchema()	
+# 			output = question_schema.dump(question).data
+# 			return jsonify({'questions': output})
+# 		except Exception as e:
+# 			return jsonify({'message':'Unauthorized access'})
+
+# GET a single question
 @app.route('/decks/<deck_id>/questions/<question_id>', methods=['GET'])
 @jwt_required
-def get_question_2(deck_id, question_id):	
+def get_question(deck_id, question_id):	
 	current_user = get_jwt_identity()
 	# user_query = request.args['q']
 	if current_user:
 		try:
-			question = db.session.query(Question).join(Deck).filter(Deck.id == deck_id, Question.id == question_id).first()
+			question = db.session.query(Question).join(Deck).join(User).filter(Deck.id == deck_id, Question.id == question_id).filter(User.id==current_user).first()
 			question_schema = QuestionSchema()	
 			output = question_schema.dump(question).data
 			return jsonify({'questions': output})

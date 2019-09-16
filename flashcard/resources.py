@@ -159,26 +159,6 @@ def update_deck_title(deck_id):
 	else:
 		return jsonify({'message':'Unauthorized access'}), 401
 
-
-
-			# return redirec("/decks/" + str(deck_id))
-
-# # GET all questions
-# @app.route('/users/<user_id>/decks/<deck_id>/questions')
-# @jwt_required
-# def get_questions(user_id, deck_id):
-# 	current_user = get_jwt_identity()
-# 	if current_user == int(user_id):
-# 		try:
-# 			questions = db.session.query(Question).join(Question.deck).filter(Deck.id==deck_id).filter(User.id==current_user).all()
-# 			question_schema = QuestionSchema(many=True)
-# 			output = question_schema.dump(questions).data
-# 			return jsonify({'questions': output})
-# 		except Exception as e:
-# 			return jsonify({'message':'Unauthorized access'})
-# # 	else:
-# 		return jsonify({'message':'Unauthorized access'})
-
 # GET all questions via query route
 # @app.route('/questions', methods=['GET'])
 # @jwt_required
@@ -209,7 +189,6 @@ def get_questions(deck_id):
 			return jsonify({'All questions': output})
 		except Exception as e:
 			return jsonify({'message':'Unauthorized access'})
-
 
 # GET a single question via query route
 # /questions/id?q=deck_id
